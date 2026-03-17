@@ -621,7 +621,7 @@ export default function App() {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Cats");
-    XLSX.writeFile(wb, `MeowManager_Care_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `MeowManager_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleDownloadTemplate = () => {
@@ -639,7 +639,7 @@ export default function App() {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, `MeowManager_Care_Cat_Template.xlsx`);
+    XLSX.writeFile(wb, `MeowManager_Cat_Template.xlsx`);
   };
 
   const handleImportCats = async (e: React.ChangeEvent<HTMLInputElement>) => {

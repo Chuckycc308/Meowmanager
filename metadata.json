@@ -1,5 +1,5 @@
 {
-  "name": "MeowManager - Care System",
+  "name": "MeowManager",
   "description": "A comprehensive multi-branch management system for cat care, featuring health tracking, employee task management, and administrative controls.",
   "requestFramePermissions": [
     "camera"

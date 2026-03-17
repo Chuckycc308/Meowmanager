@@ -1,6 +1,6 @@
 export const translations = {
   zh: {
-    appName: "喵管家 - 护理系统",
+    appName: "喵管家",
     login: "登录",
     username: "用户名",
     password: "密码",
@@ -159,7 +159,7 @@ export const translations = {
     language: "语言",
   },
   en: {
-    appName: "MeowManager - Care System",
+    appName: "MeowManager",
     login: "Login",
     username: "Username",
     password: "Password",
