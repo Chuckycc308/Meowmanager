@@ -493,11 +493,17 @@ export default function App() {
     const method = editingCat?.id ? 'PUT' : 'POST';
     const url = editingCat?.id ? `/api/cats/${editingCat.id}` : '/api/cats';
     
+    // Strip non-db fields
+    const { 
+      id, created_at, lastUpdated, branch_name, breed_name, branches, breeds, 
+      ...rest 
+    } = editingCat || {};
+
     const catData = {
-      ...editingCat,
-      branch_id: editingCat?.branch_id || currentBranch?.id || branches[0]?.id,
-      can_bathe: editingCat?.can_bathe ?? true,
-      is_neutered: editingCat?.is_neutered ?? false,
+      ...rest,
+      branch_id: rest.branch_id || currentBranch?.id || branches?.[0]?.id,
+      can_bathe: rest.can_bathe ?? true,
+      is_neutered: rest.is_neutered ?? false,
       employee_id: user?.id
     };
 
@@ -1372,10 +1378,21 @@ export default function App() {
           e.preventDefault();
           const method = editingEmployee?.id ? 'PUT' : 'POST';
           const url = editingEmployee?.id ? `/api/employees/${editingEmployee.id}` : '/api/employees';
-          const employeeData = {
-            role: 'staff',
-            ...editingEmployee
+          
+          // Strip non-db fields and handle password
+          const { id, created_at, branch_name, branches, ...rest } = editingEmployee || {};
+          const employeeData: any = {
+            name: rest.name,
+            role: rest.role || 'staff',
+            branch_id: rest.branch_id,
+            avatar: rest.avatar,
+            username: rest.username,
           };
+          
+          if (rest.password) {
+            employeeData.password = rest.password;
+          }
+
           const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
@@ -1385,6 +1402,9 @@ export default function App() {
             setIsEmployeeModalOpen(false);
             fetchInitialData();
             toast(editingEmployee?.id ? "已完成修改" : "已完成添加");
+          } else {
+            const error = await res.json();
+            toast(error.error || "操作失败");
           }
         }} className="space-y-6">
           <div className="flex justify-center">
@@ -3523,9 +3543,16 @@ const AdminDashboardView = ({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role, permissions: perms })
-    }).then(() => {
-      setAllPermissions((p: any) => ({ ...p, [role]: perms }));
-      toast("Permissions Saved");
+    }).then(async (res) => {
+      if (res.ok) {
+        setAllPermissions((p: any) => ({ ...p, [role]: perms }));
+        toast("Permissions Saved");
+      } else {
+        const error = await res.json();
+        toast(error.error || "Failed to save permissions");
+      }
+    }).catch(() => {
+      toast("Network error while saving permissions");
     });
   };
 
@@ -3544,16 +3571,28 @@ const AdminDashboardView = ({
   const [newVacType, setNewVacType] = useState('vaccine');
 
   const saveBranch = () => {
+    if (!editingBranch) return;
     const url = editingBranch.id ? `/api/branches/${editingBranch.id}` : '/api/branches';
+    
+    // Clean up data
+    const { id, created_at, ...branchData } = editingBranch;
+
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingBranch)
-    }).then(() => {
-      setIsBranchModalOpen(false);
-      setEditingBranch(null);
-      fetchInitialData();
-      toast("Branch saved successfully");
+      body: JSON.stringify(branchData)
+    }).then(async (res) => {
+      if (res.ok) {
+        setIsBranchModalOpen(false);
+        setEditingBranch(null);
+        fetchInitialData();
+        toast("Branch saved successfully");
+      } else {
+        const error = await res.json();
+        toast(error.error || "Failed to save branch");
+      }
+    }).catch(() => {
+      toast("Network error while saving branch");
     });
   };
 
@@ -3633,9 +3672,15 @@ const AdminDashboardView = ({
                 fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'dashboard_announcement', value: settings?.dashboard_announcement || '' }) }),
                 fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'dashboard_announcement_author', value: user?.name || '' }) }),
                 fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'dashboard_announcement_date', value: dateStr }) })
-              ]).then(() => {
-                setSettings((p: any) => ({ ...p, dashboard_announcement_author: user?.name, dashboard_announcement_date: dateStr }));
-                toast("Saved");
+              ]).then((responses) => {
+                if (responses.every(r => r.ok)) {
+                  setSettings((p: any) => ({ ...p, dashboard_announcement_author: user?.name, dashboard_announcement_date: dateStr }));
+                  toast("Saved");
+                } else {
+                  toast("Some settings failed to save");
+                }
+              }).catch(() => {
+                toast("Network error while saving settings");
               });
             }}>
               <Save size={16} /> {t.save}
